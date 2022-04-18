@@ -1,5 +1,6 @@
 package com.decode.auth.dtos;
 
+import com.decode.auth.validation.UsernameConstraint;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
@@ -23,21 +24,23 @@ public class UserDto {
     private UUID userId;
 
     @NotBlank(groups = UserView.ResgistrationPost.class)
-    @Size(min = 4, max = 50)
+    @Size(min = 4, max = 50, groups = UserView.ResgistrationPost.class)
+    @UsernameConstraint(groups = UserView.ResgistrationPost.class)
     @JsonView(UserView.ResgistrationPost.class)
     private String username;
 
     @NotBlank(groups = UserView.ResgistrationPost.class)
-    @Email
+    @Email(groups = UserView.ResgistrationPost.class)
     @JsonView(UserView.ResgistrationPost.class)
     private String email;
 
     @NotBlank(groups = {UserView.ResgistrationPost.class, UserView.PasswordPut.class})
-    @Size(min = 6, max = 20)
+    @Size(min = 6, max = 20, groups = {UserView.ResgistrationPost.class, UserView.PasswordPut.class})
     @JsonView({UserView.ResgistrationPost.class, UserView.PasswordPut.class})
     private String password;
 
     @NotBlank(groups = UserView.PasswordPut.class)
+    @Size(min = 6, max = 20, groups = UserView.PasswordPut.class)
     @JsonView({UserView.PasswordPut.class})
     private String oldPassword;
 

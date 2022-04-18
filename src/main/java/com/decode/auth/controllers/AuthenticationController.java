@@ -8,12 +8,15 @@ import com.decode.auth.models.UserModel;
 import com.decode.auth.services.UserService;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.util.BeanUtil;
+import org.apache.catalina.User;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
@@ -26,7 +29,8 @@ public class AuthenticationController {
 
     @PostMapping("/signup")
     public ResponseEntity<Object> registerUser(@RequestBody
-                                               @JsonView(UserDto.UserView.ResgistrationPost.class) UserDto dto){
+                                                @Validated(UserDto.UserView.ResgistrationPost.class)
+                                                @JsonView(UserDto.UserView.ResgistrationPost.class) UserDto dto){
         if(service.existByUsername(dto.getUsername())){
             return ResponseEntity.status(HttpStatus.CONFLICT).body("error: Username is already taken.");
         }
