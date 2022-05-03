@@ -36,9 +36,17 @@ public class UserController {
 
     @GetMapping()
     public ResponseEntity<Page<UserModel>> getAllUsers(SpecificationTemplate.UserSpec spec,
-                                                        @PageableDefault(page = 0, size = 10, sort = "userId", direction = Sort.Direction.ASC)
-                                                        Pageable pageable){
-        Page<UserModel> userModelPage = service.findAll(pageable, spec);
+                                                       @PageableDefault(page = 0, size = 10, sort = "userId", direction = Sort.Direction.ASC)
+                                                            Pageable pageable,
+                                                       @RequestParam(required = false) UUID courseId){
+
+        Page<UserModel> userModelPage = null;
+        if(courseId != null){
+            userModelPage = service.findAll(pageable, SpecificationTemplate.userCourseId(courseId).and(spec));
+        }else{
+            userModelPage = service.findAll(pageable, spec);
+        }
+
         if (!userModelPage.isEmpty()){
             for (UserModel model : userModelPage.toList()) {
                 model.add(linkTo(methodOn(UserController.class).getOneUser(model.getUserId())).withSelfRel());
@@ -87,7 +95,7 @@ public class UserController {
 
             service.save(userModel);
 
-            log.debug("PUT updateUser userDto saved {}", userModel.toString());
+            log.debug("PUT updateUser userId saved {}", userModel.getUserId());
             log.info("User updated successfully userId {}", userModel.getUserId());
             return ResponseEntity.status(HttpStatus.OK).body(userModel);
         }
