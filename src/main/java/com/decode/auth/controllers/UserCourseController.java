@@ -1,9 +1,12 @@
 package com.decode.auth.controllers;
 
-import com.decode.auth.clients.UserClient;
+import com.decode.auth.clients.CourseClient;
 import com.decode.auth.dtos.CourseDto;
+import com.decode.auth.dtos.UserCourseDto;
+import com.decode.auth.models.UserCourseModel;
 import com.decode.auth.models.UserModel;
-import com.decode.auth.specification.SpecificationTemplate;
+import com.decode.auth.services.UserCourseService;
+import com.decode.auth.services.UserService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -12,12 +15,14 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @Log4j2
 @RestController
@@ -25,12 +30,34 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 public class UserCourseController {
 
     @Autowired
-    UserClient userClient;
+    CourseClient courseClient;
+
+    @Autowired
+    UserService service;
+
+    @Autowired
+    UserCourseService userCourseService;
 
     @GetMapping("/users/{userId}/courses")
     public ResponseEntity<Page<CourseDto>> getAllCoursesByUser(@PageableDefault(page = 0, size = 10, sort = "courseId", direction = Sort.Direction.ASC)
                                                                Pageable pageable,
                                                        @PathVariable(value = "userId") UUID userId){
-        return ResponseEntity.status(HttpStatus.OK).body(userClient.getAllCoursesByUser(userId, pageable));
+        return ResponseEntity.status(HttpStatus.OK).body(courseClient.getAllCoursesByUser(userId, pageable));
+    }
+
+    @PostMapping("/users/{userId}/courses/subscription")
+    public ResponseEntity<Object> saveSubscriptionUserInCourse(@PathVariable(value = "userId") UUID userId,
+                                                               @RequestBody @Valid UserCourseDto userCourseDto){
+        Optional<UserModel> userModelOptional = service.findById(userId);
+        if(!userModelOptional.isPresent()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+
+        if(userCourseService.existsByUserAndCourseId(userModelOptional.get(), userCourseDto.getCourseId())){
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Error: subscription already exists!");
+        }
+
+        UserCourseModel userCourseModel = userCourseService.save(userModelOptional.get().convertToUserCourseModel(userCourseDto.getCourseId()));
+        return ResponseEntity.status(HttpStatus.CREATED).body(userCourseModel);
     }
 }
