@@ -1,6 +1,8 @@
 package com.decode.auth.services.impl;
 
+import com.decode.auth.models.UserCourseModel;
 import com.decode.auth.models.UserModel;
+import com.decode.auth.repositories.UserCourseRepository;
 import com.decode.auth.repositories.UserRepository;
 import com.decode.auth.services.UserService;
 import org.apache.catalina.User;
@@ -19,6 +21,9 @@ public class UserServiceImpl implements UserService {
     @Autowired
     UserRepository repository;
 
+    @Autowired
+    UserCourseRepository userCourseRepository;
+
 
     @Override
     public List<UserModel> findAll() {
@@ -32,6 +37,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void delete(UserModel userModelOptional) {
+        List<UserCourseModel> userCourseModelList = userCourseRepository.findAllUserCourseIntoUser(userModelOptional.getUserId());
+        if(!userCourseModelList.isEmpty()) {
+            userCourseRepository.deleteAll(userCourseModelList);
+        }
+
         repository.delete(userModelOptional);
     }
 
