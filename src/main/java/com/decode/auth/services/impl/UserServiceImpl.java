@@ -1,5 +1,6 @@
 package com.decode.auth.services.impl;
 
+import com.decode.auth.clients.CourseClient;
 import com.decode.auth.models.UserCourseModel;
 import com.decode.auth.models.UserModel;
 import com.decode.auth.repositories.UserCourseRepository;
@@ -12,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -24,6 +26,8 @@ public class UserServiceImpl implements UserService {
     @Autowired
     UserCourseRepository userCourseRepository;
 
+    @Autowired
+    CourseClient courseClient;
 
     @Override
     public List<UserModel> findAll() {
@@ -35,14 +39,21 @@ public class UserServiceImpl implements UserService {
         return repository.findById(userId);
     }
 
+    @Transactional
     @Override
     public void delete(UserModel userModelOptional) {
+        boolean deleteUserCourseInCourse = false;
         List<UserCourseModel> userCourseModelList = userCourseRepository.findAllUserCourseIntoUser(userModelOptional.getUserId());
         if(!userCourseModelList.isEmpty()) {
             userCourseRepository.deleteAll(userCourseModelList);
+            deleteUserCourseInCourse = true;
         }
 
         repository.delete(userModelOptional);
+
+        if (deleteUserCourseInCourse){
+            courseClient.deleteUserInCourse(userModelOptional.getUserId());
+        }
     }
 
 
